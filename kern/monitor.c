@@ -59,16 +59,23 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
         // Your code here.
         uint32_t *old_ebp, last_eip;
+        struct Eipdebuginfo eipdebuginfo;
         
         asm volatile("movl %%ebp, %0;" : "=r" (old_ebp));
         cprintf("Stack backtrace:\n");
         while (old_ebp)
         {
             last_eip = old_ebp[1];
+            debuginfo_eip(last_eip, &eipdebuginfo);
             cprintf("  ebp %08x  eip %08x  args %08x %08x %08x %08x %08x\n", 
                 old_ebp, last_eip, old_ebp[2], old_ebp[3], old_ebp[4], old_ebp[5], old_ebp[6]);
+            cprintf("         %s:%d: ", 
+                eipdebuginfo.eip_file, eipdebuginfo.eip_line);
+            cprintf("%.*s+%d\n",
+                eipdebuginfo.eip_fn_namelen, eipdebuginfo.eip_fn_name, last_eip - eipdebuginfo.eip_fn_addr);
             old_ebp = (uint32_t *) old_ebp[0];
         }
+        
         return 0;
 }
 
