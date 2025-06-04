@@ -489,15 +489,15 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	// Fill this function in
 	struct PageInfo *pp;
-	pte_t *pte =  pgdir_walk(pgdir, va, 0);			//如果对应的页表不存在，不进行创建
+	pte_t *pte =  pgdir_walk(pgdir, va, 0);//如果对应的页表不存在，不进行创建
 	if (pte == NULL) {
 		return NULL;
 	}
 	if (!(*pte) & PTE_P) {
 		return NULL;
 	}
-	physaddr_t pa = PTE_ADDR(*pte);					//va对应的物理
-	pp = pa2page(pa);								//物理地址对应的PageInfo结构地址
+	physaddr_t pa = PTE_ADDR(*pte);//va对应的物理
+	pp = pa2page(pa);		//物理地址对应的PageInfo结构地址
 	if (pte_store != NULL) {
 		*pte_store = pte;
 	}
