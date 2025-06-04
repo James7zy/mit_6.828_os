@@ -177,37 +177,37 @@ print_regs(struct PushRegs *regs)
 static void
 trap_dispatch(struct Trapframe *tf)
 {
+        int32_t ret_code;
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-        if (tf->tf_trapno == T_PGFLT) {
+        switch(tf->tf_trapno) {
+            case (T_PGFLT):
                 page_fault_handler(tf);
-                return;
-        }
-
-        if (tf->tf_trapno == T_BRKPT) {
+                break;
+            case (T_BRKPT):
                 monitor(tf);
-                return;
+                break;
+            case (T_SYSCALL):
+        //        print_trapframe(tf);
+                ret_code = syscall(
+                        tf->tf_regs.reg_eax,
+                        tf->tf_regs.reg_edx,
+                        tf->tf_regs.reg_ecx,
+                        tf->tf_regs.reg_ebx,
+                        tf->tf_regs.reg_edi,
+                        tf->tf_regs.reg_esi);
+                tf->tf_regs.reg_eax = ret_code;
+                break;
+             default:
+                // Unexpected trap: The user process or the kernel has a bug.
+                print_trapframe(tf);
+                if (tf->tf_cs == GD_KT)
+                    panic("unhandled trap in kernel");
+                else {
+                    env_destroy(curenv);
+                    return;
+                }
         }
-
-        if(tf->tf_trapno == T_SYSCALL) {
-                tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
-                                              tf->tf_regs.reg_edx,
-                                              tf->tf_regs.reg_ecx,
-                                              tf->tf_regs.reg_ebx,
-                                              tf->tf_regs.reg_edi,
-                                              tf->tf_regs.reg_esi);
-                return;
-        }
-
-
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
-	}
 }
 
 void
@@ -260,7 +260,9 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
-
+           if(tf->tf_cs && 0x01 == 0) {
+                        panic("page_fault in kernel mode, fault address %d\n", fault_va);
+        } 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
 
